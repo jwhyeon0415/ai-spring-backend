@@ -11,7 +11,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("legacy/sports")
+@RequestMapping("/sports")
 public class CelebsController {
 
     private final ShowingCelebService showingCelebService;
