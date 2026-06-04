@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
-@RequestMapping("/legacy/sports")
+@RequestMapping("/sports")
 public class SportsController {
 
     private final Map<Long, Sports> storage = new ConcurrentHashMap<>();
