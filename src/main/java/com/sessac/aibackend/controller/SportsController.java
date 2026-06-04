@@ -1,8 +1,6 @@
 package com.sessac.aibackend.controller;
 
-
 import com.sessac.aibackend.domain.Sports;
-import com.sessac.aibackend.dto.ItemResponse;
 import com.sessac.aibackend.dto.SportsRequest;
 import com.sessac.aibackend.dto.SportsResponse;
 import com.sessac.aibackend.error.NotFoundException;
