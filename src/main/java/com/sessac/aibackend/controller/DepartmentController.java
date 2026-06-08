@@ -39,11 +39,11 @@ public class DepartmentController {
         // username은 unique 제약이 있으므로, 충돌은 409로 명확히 응답합니다.
         if (departmentService.existsByDeptname(req.deptname())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "username already exists: " + req.username());
+                    "deptname already exists: " + req.deptname());
         }
         Department saved = departmentService.save(req.toEntity());
         URI location = URI.create("/users/" + saved.getId());
-        return ResponseEntity.created(location).body(DepartmentService.from(saved));
+        return ResponseEntity.created(location).body(DepartmentResponse.from(saved));
     }
 
     @DeleteMapping("/{id}")
