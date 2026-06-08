@@ -4,68 +4,60 @@ import com.sessac.aibackend.domain.Item;
 import com.sessac.aibackend.dto.ItemRequest;
 import com.sessac.aibackend.dto.ItemResponse;
 import com.sessac.aibackend.error.NotFoundException;
+import com.sessac.aibackend.service.ItemService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
-@RequestMapping("/legacy/items")   // GetMapping x, ItemController의 최상위 경로 잡아주는,, (하위 method들의 최상위 경로,,)
+@RequiredArgsConstructor
+@RequestMapping("/items")
 public class ItemController {
+    private final ItemService itemService;   // itemService 의존성 주입,,
 
-    private final Map<Long, Item> storage = new ConcurrentHashMap<>(); // storage: 저장소 (Map 객체)
-    private final AtomicLong sequence = new AtomicLong(1);   // sequence: 카운터
-
-    @GetMapping  // RequestMapping에 경로 지정 -> 경로 생략 가능,, ("/items") 저정 시 -> ("/legacy/items/items") 중첩됨
+    @GetMapping
     public List<ItemResponse> list() {
-        return storage.values().stream().map(ItemResponse::from).toList();
+        return itemService.findAll().stream().map(ItemResponse::from).toList();
     }
+    // findall() 결과 list로 빼
 
-    @GetMapping("/{id}")  // "legacy/items/{id}"로 들어오는 method는 요거 실행,,
+    @GetMapping("/{id}")
     public ItemResponse get(@PathVariable Long id) {
-        Item item = storage.get(id);
-
-        if (item == null) {
-            throw NotFoundException.of("item", id);
-        }
-
+        Item item = itemService.findById(id)
+                .orElseThrow(() -> NotFoundException.of("item", id));    // orElseThrow(): 만약에 없다면 (findBy(id)가 Optional이니까)
         return ItemResponse.from(item);
     }
 
-    @PostMapping   // legacy item이 post로 들어오면 실행됨,,
-    public ResponseEntity<ItemResponse> create(@Valid @RequestBody ItemRequest req) {
-        long id = sequence.getAndIncrement();  // 1씩 증가,,
-        Item saved = Item.builder().id(id).name(req.name()).price(req.price()).build();
-        storage.put(id, saved);  // storage에 우리가 만든 saved된 객체 put,,  -> 배열 method에 save 마냥 흉내내기 위해 하나씩 putputput
-        return ResponseEntity.created(URI.create("/legacy/items/" + id)).body(ItemResponse.from(saved));
+    @PostMapping       // Update는 post랑 다르게 id가 path에 들어옴,,,
+    public ResponseEntity<ItemResponse> create(@Valid @RequestBody ItemRequest req) {   // DTO에 담아서
+        Item saved = itemService.save(req.toEntity());  // toEntity(): DTO로 미리 생성해 놓음. 우리가 만든 모양이랑 다르니까
+        URI location = URI.create("/items/" + saved.getId());  // Proxy 객체. 가짜 객체 만들어 놓고,,
+        return ResponseEntity.created(location).body(ItemResponse.from(saved));  // Body 에 우리가 save한 객체,,
     }
 
     @PutMapping("/{id}")
     public ItemResponse update(@PathVariable Long id, @Valid @RequestBody ItemRequest req) {
-        Item existing = storage.get(id);
-
-        if (existing == null) {
-            throw NotFoundException.of("item", id);
-        }
-        existing.setName(req.name());
-        existing.setPrice(req.price());
-        return ItemResponse.from(existing);
+        Item item = itemService.findById(id)    // 얘는 영속된 상태로 오겠구나...
+                .orElseThrow(() -> NotFoundException.of("item", id));
+        item.setName(req.name());
+        item.setPrice(req.price());
+        return ItemResponse.from(itemService.save(item));  // 1차 값이랑 달라(스냅샷 찍어놓은 거랑 달라) -> 인서트 x, update 켜서 ,
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}")  // 삭제는 두가지. (영속성..)
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-
-        if (storage.remove(id) == null) {
+        if (!itemService.existsById(id)) {
             throw NotFoundException.of("item", id);
         }
-
-        return ResponseEntity.noContent().build();   //  noContent -> 404 error
+        itemService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
-
-
 }
+
+// Service 비즈니스 로직 레이어 제공.
+// 최종적으로 컨트롤러에서 서비스 주입 받아서.
+// (모든 건 영속된 객체 기준으로..)
