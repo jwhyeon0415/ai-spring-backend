@@ -22,14 +22,14 @@ public class EmployeeController {
 
     @GetMapping
     public List<EmployeeResponse> list(@RequestParam Long deptId) {
-        return employeeService.findByUserId(deptId).stream()
+        return employeeService.findByDeptId(deptId).stream()
                 .map(EmployeeResponse::from)
                 .toList();
     }
 
     @GetMapping("/with-dept")
-    public List<EmployeeResponse> listWithUser(@RequestParam Long deptId) {
-        return employeeService.findByUserIdWithUser(deptId).stream()
+    public List<EmployeeResponse> findByDeptIdWithDepartment(@RequestParam Long deptId) {
+        return employeeService.findByDeptIdWithDepartment(deptId).stream()
                 .map(EmployeeResponse::fromWithDeptname)
                 .toList();
     }

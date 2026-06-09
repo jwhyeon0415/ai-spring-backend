@@ -32,10 +32,10 @@ public class EmployeeService {
     }
 
         @Transactional(readOnly = true)
-        public List<Employee> findByUserId(Long deptId) {
+        public List<Employee> findByDeptId(Long deptId) {
             departmentRepository.findById(deptId)
                     .orElseThrow(() -> NotFoundException.of("department", deptId));
-            return employeeRepository.findByDeptIdOrderByCreatedAtDesc(deptId);
+            return employeeRepository.findByDeptIdOrderByIdDesc(deptId);
         }
 
         /**
@@ -43,7 +43,7 @@ public class EmployeeService {
          * 응답에서 getUser().getUsername()을 읽는 fromWithUsername()과 짝을 이룹니다.
          */
         @Transactional(readOnly = true)
-        public List<Employee> findByUserIdWithUser(Long deptId) {
+        public List<Employee> findByDeptIdWithDepartment(Long deptId) {
             // 존재하지 않는 사용자는 404로 구분 (fetch join은 결과가 없으면 빈 리스트라 구분 불가)
             departmentRepository.findById(deptId)
                     .orElseThrow(() -> NotFoundException.of("department", deptId));
