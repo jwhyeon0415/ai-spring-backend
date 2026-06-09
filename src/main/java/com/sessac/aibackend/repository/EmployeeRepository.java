@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
-    List<Employee> findByDeptIdOrderByCreatedAtDesc(Long deptId);
+    List<Employee> findByDeptIdOrderByIdDesc(Long deptId);
 
     @Query("""
            select e from Employee e
